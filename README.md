@@ -36,38 +36,23 @@ Many functions are also available as script steps. However, the function based v
 
 ***
 
-## [Installation & Requirements](https://github.com/beezwax/bbox-documentation/wiki/Installation))
+## [Installation & Requirements](https://github.com/beezwax/bbox-documentation/wiki/Installation)
 
 Information on pre-requisites for installation, and how to install.
 
 ***
 
-### [Error Handling](https://github.com/beezwax/bbox-documentation/wiki/Errors)
+## [Error Handling](https://github.com/beezwax/bbox-documentation/wiki/Errors)
 
 Information getting and handling errors in bBox.
 
- 
-### bBox Modes
+## [bBox Modes](https://github.com/beezwax/bbox-documentation/Mode-Parameters)
 
-Many functions and script steps accept a mode parameter. These are bit flags that enable features or behaviors.
+Many functions and script steps accept a mode parameter to adjust features or behaviors.
 
-mode flags
- +1: skip conversion of carriage returns to line feeds on input
- +2: skip conversion of line feeds to carriage returns on output
- +4: run asynchronously (don't wait for output)
- +8: skip finalization (keep context)
- +16: use alternate path for command
- +32: combine stdout & stderr (often to get error output that does not go to stdout)
- +64: unzip container references
+***
 
-Add the values together to combine options. For instance, use a mode of 20 to run asynchronously AND using an alternate command path.
-
-Most functions will only support a subset of the available modes.
-
-Unzipping of parameter references only available since version 0.99.7.
-
- 
-### bBox Parameters
+## bBox Parameters
 
 In most cases, any function or script parameters will use their text equivalent, e.g. a numeric value 1234 will be returned as the string “1234”.
 
