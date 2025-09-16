@@ -44,7 +44,7 @@ Information on pre-requisites for installation, and how to install.
 
 ## [Error Handling](https://github.com/beezwax/bbox-documentation/wiki/Errors)
 
-Information getting and handling errors in bBox.
+Information on getting and handling errors in bBox or trouble-shooting issues.
 
 ***
 
@@ -66,28 +66,11 @@ When using the `bBox_JavaScript`, `bBox_PythonExecute`, and `bBoxPythoneEval` fu
 
 ***
 
-## Session and Re-entrancy/Thread-safe
+## Sessions and Thread Saftey
 
-Some functionality requires a persistent state or context, which may require limitiations on how they are called. We will use the term “thread safe” if multiple PSOS or server script schedules can use the same function/script step AND multiple unrelated calls can occur in that session. The bBox_Bash function is an example of this, since each call is atomic and has no side effects. Of course, if you make two seperate calls to a shell script that writes its results to a file at the same path, your script will of created its own conflicts.
+Some functionality requires a persistent state or context, which may require limitiations on how they are called. 
 
-Some functions are only “session safe”, meaning that each PSOS or script schedule session maintains its own context for those functions, so simultaneous calls may be made safely from two different sessions, but it is not safe to attempt more than one at a time.
-
-Finally, the bBox_Python* functions only support a single instance of the Python VM at a time. If you’ll potentially have overlapping calls, you should implement a blocking mechanism (mutex) so that only one call can running. For simpler usage, the bBox_Python3Run function may be a better choice since it is thread safe
-
-Below is a list of some exceptions to be aware of:
-
-`bBox_LastError`: result is session safe for most cases; for DuckDB it is also thread safe
-
-`bBox_JavaScript`: session and thread safe, but bBox_LastError(-5) is only session safe
-
-`bBox_Python*`: these functions are not thread or session safe
-
-`bBox_Python3Run`: thread safe
-
-`bBox_DuckDB*`: DuckDB functions are session and thread-safe
-
-`bBox_XPath`: session safe
-
+***
  
 ## Function Documentation by Version
 
