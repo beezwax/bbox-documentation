@@ -54,51 +54,11 @@ Many functions and script steps accept a mode parameter to adjust features or be
 
 ***
 
-## bBox Parameters
+## [bBox Parameters](https://github.com/beezwax/bbox-documentation/wiki/Parameters
 
-In most cases, any function or script parameters will use their text equivalent, e.g. a numeric value 1234 will be returned as the string “1234”.
-
-For functions or script steps expecting a path, these will always be in POSIX format. Paths from FileMaker functions like Get (DocumentsFolder) will need to be converted into its POSIX equivalent using the ConvertFromFileMakerPath function before passing in to the bBox function or script step.
-
-If you need to pass a file in a container or text file as a result, the `bBox_FileWrite` or bBox_FileRead` functions may be helpful.
-`
-Alternately, starting with version 0.97, a number of functions have shortcuts that allow you to use container references as parameters. These are:
-
-* bBox_Bash function & script step
-* bBox_Curl function
-* bBox_GraphicsMagick function
-* bBox_Grep function & script step
-* bBox_JavaScriptNode
-* bBox_JQ function
-* bBox Python3 Run script step
-* bBox_Ruby function
-* bBox_Sips function
-* bBox_Zsh function & script step
-
-When a container reference is passed in, the container’s file will be written out to the system's /tmp directory using a name in the form of bBox_posix_XXXXXXXXX.bin, where XXXXXXXXX is replaced with randomized characters and will never conflict with an existing file. The file path is then used as a replacement for the parameter. In the example below, the file in the container field reference will be written out to the file system, and Bash will receive the path as its parameter instead. The stat command will then be executed by Bash, and stat’s output will be returned:
-  `bBox_Bash(0; "stat $1"; "-s"; RESOURCE::file)`
-
-A few things to note here. First, all files written out this way will have a .bin extension, regardless of their file type or original name. If a .zip file, and the unzip mode is set, a directory will be created instead. Finally, these files are typically purged by the OS after three days, or the next reboot. If working with larger files you may want to purge them periodically before then, possibly by running a command like:
-
-`bBox_Bash(0; "rm /tmp/bBox_posix_*")`
-
-If server-side, only run this when there aren’t any other scripts running and using the files there.
-
-FileMaker, Line Endings, and Character Encoding
-
-FileMaker has several conventions that are likely to cause issues with functions expecting New Line (ASCII 10) line breaks.
-
-First and foremost, FileMaker will strip out line breaks completely with string literals. Because of this, always store scripts or other line delimited text in database text fields, use the Insert Text script step, or store text in a container field.
-
-
-
-Even in cases where line endings are preserved by FileMaker, it defaults to using a Carriage Return for all line breaks. Any text going to or from a bBox function expecting POSIX formatted text will often not handle this correctly. Here however bBox typically defaults to translating the line endings for you. If needed, you may be able to override this translation by setting the necessary flag in a function’s mode parameter. See the [function documentation](https://www.beezwax.net/bbox-functions) page for details.
-
-
-
-Finally, many POSIX commands expect UTF-8 encoded text. If you are using text that requires 16 or 32 bit Unicode characters they may not translate into a UTF-8 equivalent, and will be stripped out of the text when it is converted.
-
+Various parameter types and how they are handled.
  
+***
 
 ### Python & JavaScript Functions
 
