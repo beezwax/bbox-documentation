@@ -66,9 +66,9 @@ When using the `bBox_JavaScript`, `bBox_PythonExecute`, and `bBoxPythoneEval` fu
 
 ***
 
-## Sessions and Thread Saftey
+## [Sessions and Thread Saftey](https://github.com/beezwax/bbox-documentation/wiki/Sessions-&-Thread-Safety)
 
-Some functionality requires a persistent state or context, which may require limitiations on how they are called. 
+Some functionality require a persistent state or context, or have limitations on when they are called. 
 
 ***
  
