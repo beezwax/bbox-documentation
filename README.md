@@ -60,9 +60,11 @@ Various parameter types and how they are handled.
  
 ***
 
-## Python & JavaScript Functions
+## [Native Python, JavaScript, & DuckDB Functions](https://github.com/beezwax/bbox-documentation/wiki/Native-Python,-JavaScript,-and-DuckDB-Functions)
 
-When using the JavaScript functions, and Python functions without the "Run" suffix, bBox can add in a custom `fm` class to the environment for improved integration with FileMaker.
+When using the `bBox_JavaScript`, `bBox_PythonExecute`, and `bBoxPythoneEval` functions bBox can add in a custom `fm` class to the environment for improved integration with FileMaker. DuckDB supports an `fmevaluate` function too.
+
+***
 
 ## Session and Re-entrancy/Thread-safe
 
