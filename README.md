@@ -54,7 +54,7 @@ Many functions and script steps accept a mode parameter to adjust features or be
 
 ***
 
-## [bBox Parameters](https://github.com/beezwax/bbox-documentation/wiki/Parameters
+## [bBox Parameters](https://github.com/beezwax/bbox-documentation/wiki/Parameters)
 
 Various parameter types and how they are handled.
  
