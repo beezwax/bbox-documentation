@@ -46,7 +46,9 @@ Information on pre-requisites for installation, and how to install.
 
 Information getting and handling errors in bBox.
 
-## [bBox Modes](https://github.com/beezwax/bbox-documentation/Mode-Parameters)
+***
+
+## [bBox Modes](https://github.com/beezwax/bbox-documentation/wiki/Mode-Parameters)
 
 Many functions and script steps accept a mode parameter to adjust features or behaviors.
 
