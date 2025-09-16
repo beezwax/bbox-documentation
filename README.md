@@ -36,22 +36,15 @@ Many functions are also available as script steps. However, the function based v
 
 ***
 
-## [Installation & Requirements](https://www.beezwax.net/bbox-wiki-installation)
+## [Installation & Requirements](https://github.com/beezwax/bbox-documentation/wiki/Installation))
 
-The bBox plug-in requires a recent version of macOS or Ubuntu 20, 22, or 24. Basic plug-in compatibility checked back to FileMaker 21.0, but older versions of FileMaker may still work.
+Information on pre-requisites for installation, and how to install.
 
-The bBox Plug-in Demo file requires at least FileMaker Pro or Server 20.0. 
+***
 
-See the [Installation](https://www.beezwax.net/bbox-wiki-installation) page for full requirements and installation information, as well as any documentation that comes with your download.
+### [Error Handling](https://github.com/beezwax/bbox-documentation/wiki/Errors)
 
-
-### bBox Errors
-
-Nearly all functions may return some sort of error result. For a few functions, different types of errors can be returned in different ways.
-
-Although avoided, it’s possible a function might return “?” as its result, as this is the default for FileMaker when the function has a serious error, or the plug-in is missing.
-
-Most functions return their errors with the `bBox_LastError` function. It accepts a session ID, which is either a value returned from a previous function call (e.g., the value returned by `bBox_SQLiteOpen`), or a fixed value (e.g., `-1` or `POSIX` for shell or POSIX functions).
+Information getting and handling errors in bBox.
 
  
 ### bBox Modes
