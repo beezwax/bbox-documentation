@@ -30,9 +30,9 @@ Some common uses are:
 
 ***
 
-## [FileMaker Function List](https://www.beezwax.net/bbox-functions)
+## [FileMaker Function List](https://github.com/beezwax/bbox-documentation/wiki/Functions-&-Script-Steps)
 
-Many functions are also available as script steps. However, the function based versions often have fewer restrictions on parameters.
+Full list of bBox functions, and links to detailed information for each. Many functions are also available as script steps, and are also documented here.
 
 ***
 
