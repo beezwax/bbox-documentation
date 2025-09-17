@@ -42,7 +42,7 @@ Information on pre-requisites for installation, and how to install.
 
 ***
 
-## [Error Handling](https://github.com/beezwax/bbox-documentation/wiki/Errors)
+## [Error Handling & Troubleshooting](https://github.com/beezwax/bbox-documentation/wiki/Errors)
 
 Information on getting and handling errors in bBox or trouble-shooting issues.
 
@@ -62,7 +62,7 @@ Various parameter types and how they are handled.
 
 ## [Native Python, JavaScript, & DuckDB Functions](https://github.com/beezwax/bbox-documentation/wiki/Native-Python,-JavaScript,-and-DuckDB-Functions)
 
-When using the `bBox_JavaScript`, `bBox_PythonExecute`, and `bBoxPythoneEval` functions bBox can add in a custom `fm` class to the environment for improved integration with FileMaker. DuckDB supports an `fmevaluate` function too.
+When using the `bBox_JavaScript`, `bBox_PythonExecute`, or `bBoxPythoneEval` functions, bBox can add in a custom `fm` class to the environment for improved integration with FileMaker. DuckDB supports an `fmevaluate` function too.
 
 ***
 
