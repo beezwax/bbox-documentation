@@ -72,7 +72,7 @@ Some functionality require a persistent state or context, or have limitations on
 
 ***
  
-## Function Documentation by Version
+## Older Function Documentation by Version
 
 * [Documentation (version 0.97+)](https://www.beezwax.net/bbox-functions)
 * [Documentation (version 0.88)](https://www.beezwax.net/bbox-0-88-functions)
@@ -80,7 +80,7 @@ Some functionality require a persistent state or context, or have limitations on
 
 ## Examples
 
-The bBox Plug-in Demo file has 200 examples of the various functions, and is included with the bBox disk image.
+The bBox Plug-in Demo file has 200 examples of the various functions, and is included with the bBox download image.
 
 
 ## Product Information
