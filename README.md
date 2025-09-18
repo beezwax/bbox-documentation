@@ -1,6 +1,6 @@
 For more information on bBox, select one of the links below or to the right.
 
-**[Documentation](https://github.com/beezwax/bbox-documentation)**
+**[Documentation](https://github.com/beezwax/bbox-documentation/wiki)**
 
 **[Download Form](https://beezwax.net/forms/download/bbox)**
 
