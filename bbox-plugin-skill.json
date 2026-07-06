@@ -1,0 +1,473 @@
+{
+  "name": "bbox-filemaker-plugin",
+  "display_name": "bBox FileMaker Plug-in",
+  "version": "1.6.0",
+  "description": "Use this skill whenever the user is writing FileMaker calculations, scripts, or script steps that call the bBox plug-in (functions or script steps prefixed bBox_ or 'bBox ...'), or asks to shell out, run AppleScript, Python, Ruby, Node/JavaScript, cURL, DuckDB/SQLite, GraphicsMagick, or manipulate files/pasteboard/webviewers from within FileMaker. Also use for bBox installation, licensing/download, error handling (bBox_LastError), mode parameters, session/thread-safety questions, or PSoS/Server-side script limitations involving bBox.",
+  "source": "https://github.com/beezwax/bbox-documentation (README + wiki, retrieved 2026-07-06)",
+  "vendor": "Beezwax Datatools, Inc.",
+  "license": "free (closed source)",
+  "product_url": "https://www.beezwax.net/products/bbox",
+  "download_url": "https://beezwax.net/forms/download/bbox",
+  "current_version_documented": "1.06 (as of July 19, 2025)",
+
+  "summary": "bBox is a free FileMaker plug-in that acts as a toolbox of native functions and script steps, letting FileMaker solutions on macOS or Ubuntu Server call out to AppleScript, shell/Bash/Zsh, cURL (SOAP/REST), DuckDB and SQLite, JavaScript (Node and JavaScriptCore), JQ, GraphicsMagick, Python, Ruby, and XPath, plus OS-level features like the pasteboard, file system, WebViewer control, and syslog. It fills gaps in FileMaker's built-in calculation/script-step vocabulary so developers can avoid workarounds for things like JSON/XML parsing, SOAP calls, PDF/Excel generation, image manipulation, or shelling out to external code libraries.",
+
+  "when_to_use": [
+    "Writing or debugging a FileMaker calculation/script that calls any bBox_* function or 'bBox ...' script step",
+    "Deciding which bBox function fits a task (shell command, HTTP/REST/SOAP call, Python/Ruby/Node execution, image processing, file I/O, pasteboard/clipboard, AppleScript automation, WebViewer JS injection, DuckDB/SQLite queries)",
+    "Installing or upgrading the bBox plug-in on macOS, FileMaker Server, or Ubuntu 20/22/24 (client or server)",
+    "Handling bBox errors via bBox_LastError, or troubleshooting a function that isn't returning expected results",
+    "Understanding a function's mode parameter, session/reference handling, or thread-safety constraints",
+    "Evaluating whether a bBox function will work under PSoS (Perform Script on Server), server schedules, WebDirect, or inside a stored vs. unstored calculation field"
+  ],
+
+  "platform_support": {
+    "operating_systems": ["macOS 13.0 - 26.5", "Ubuntu Linux 22", "Ubuntu Linux 24"],
+    "windows_supported": false,
+    "filemaker_versions": "FileMaker Client and Server 21 - 26.x (basic compatibility checked back to FileMaker 21.0; older versions may still work)",
+    "server_features": ["PSoS (Perform Script on Server)", "script schedules", "CWP", "WebDirect"],
+    "notes": [
+      "Ubuntu support was added in bBox 0.98.06; Apple Silicon (M1) support in 0.98.07; Ubuntu ARM in 1.05.",
+      "There is no Windows version of the plug-in.",
+      "On Linux, several functions have extra OS-level dependencies that must be installed or the plug-in will fail to load: bBox_GraphicsMagick, bBox_JavaScript (function and script step), bBox_JQ, bBox_Python / bBox_Python3Run (function and script step), bBox_Ruby, bBox_Zsh.",
+      "On macOS, most Python functions except for bBox_Python3Run are hard-linked to the official Python 3.13.x binaries from python.org."
+    ]
+  },
+
+  "installation": {
+    "how_to_get_it": "Free download via a request form at https://beezwax.net/forms/download/bbox (no info required, contact info optional/helpful).",
+    "client_install": "Drop the plug-in file into a container field and run the Install Plug-In File script step, or place it manually in <home>/Library/Application Support/FileMaker/FileMaker Pro/{version}/ on macOS.",
+    "server_install": "Server-side install requires the 'FileMaker Script Engine Plug-ins' option and 'Install Plug-in File' script step option enabled in FMS Admin Console. See Claris' plug-in management docs. Server-side use limits functions that need a logged-in user/UI (notably much AppleScript functionality).",
+    "version_check_tip": "Check for an existing install by testing whether bBox_Version returns '?' before reinstalling, to avoid needless re-installs.",
+    "ubuntu_install": {
+      "general": "Copy the bBox.fmx file to /opt/FileMaker/FileMaker Server/Database Server/Extensions/ and ensure FMS has access (chown fmserver:fmsadmin, or fmserver: on Ubuntu 24). Restart the script engine after upgrades with: fmsadmin restart fmse",
+      "ubuntu_20": "Python 3.11 isn't available by default; add the deadsnakes PPA, then: sudo apt-get -y install libpython3.11 libjavascriptcoregtk-4.0-18 libobjc4",
+      "ubuntu_22": "sudo apt-get -y install libpython3.11 libjavascriptcoregtk-4.1 (intel & ARM; use the Ubuntu 20 .fmx)",
+      "ubuntu_24": "Add the deadsnakes PPA for Python 3.11, then: sudo apt-get -y install libpython3.11 libjavascriptcoregtk-4.1-0 libobjc4 (intel & ARM; use the Ubuntu 22 .fmx)"
+    },
+    "demo_file": "The bBox Plug-in Demo file (requires FileMaker Pro/Server 20.0+) auto-installs/updates the plug-in on macOS and contains ~200 example functions."
+  },
+
+  "known_limitations": [
+    "Server-side scripts (PSoS/schedules) cannot use functions that depend on a logged-in user or launching/communicating with a GUI application (e.g. much of AppleScript).",
+    "FMS's script engine is more resource-constrained; heavy native code (e.g. large Python loops pushing data onto the stack) can exceed stack limits and crash the script engine.",
+    "FileMaker limits PSoS parameters/results to 1,000,000 characters; exceeding this can hang the client.",
+    "Shell, Bash, Python, and Ruby-based functions do not behave reliably inside a STORED calculation field; use unstored calculations instead.",
+    "bBox_Shell only returns stdout, and does not support container data as its script parameter; use bBox_Bash or bBox_Zsh for finer control over input/output. bBox_Shell output is truncated after 160 MB."
+  ],
+
+  "core_concepts": {
+    "mode_parameter": "Many bBox functions/script steps take a leading 'mode' integer that toggles behavior (e.g. for bBox_Shell: 0 = convert both input/output line endings, 1 = skip CR-to-LF conversion of FileMaker input, 2 = skip LF-to-CR conversion of shell output, 3 = skip both conversions). Always check the specific function's mode table rather than assuming 0 is always the same meaning across functions. See the 'Mode Parameters' wiki page.",
+    "error_handling": "Use bBox_LastError(reference) to retrieve the last error for a given engine/category (e.g. 'posix' for shell-family functions). Reference-based functions (DuckDB, SQLite, XPath, Python sessions) generally report errors scoped to their reference/session.",
+    "references_and_sessions": "Stateful integrations (bBox_DuckDBOpen/Exec/Close, bBox_SQLiteOpen/Exec/Close, bBox_PythonCompile/Execute/GetVar/SetVar/Finalize, bBox_XPathInitializeFromText/Evaluate/Finalize) use an open/execute/close (or compile/execute/finalize) lifecycle keyed by a reference number, and have thread-safety rules — consult 'Sessions and Thread Safety' before running these concurrently or across scripts/threads.",
+    "native_bridge_classes": "bBox_JavaScript, bBox_JavaScriptNode, and the Python execution functions can expose an `fm` class/object inside the script environment, letting embedded Python/JavaScript code call back into FileMaker (get/set fields, run scripts, etc.). See 'Native Python, JavaScript, and DuckDB Functions', 'Python Native Functions', and 'JavaScript Native Functions'.",
+    "functions_vs_script_steps": "Most functions have an equivalent script step that calls the same underlying code, sometimes with simplified parameters. For complex scenarios prefer the function form; use the script step for simple cases or when a step-based workflow is more convenient."
+  },
+
+  "function_categories": {
+    "scripting_and_shell": ["bBox_Applescript", "bBox_Bash", "bBox_Shell", "bBox_Zsh"],
+    "networking": ["bBox_Curl", "bBox_Scp"],
+    "databases": ["bBox_DuckDBOpen", "bBox_DuckDBExec", "bBox_DuckDBClose", "bBox_SQLiteOpen", "bBox_SQLiteExec", "bBox_SQLiteOptions", "bBox_SQLiteClose", "bBox_ExecuteSQL"],
+    "scripting_languages": ["bBox_JavaScript", "bBox_JavaScriptNode", "bBox_Python3Run", "bBox_PythonCompile", "bBox_PythonExecute", "bBox_PythonEval", "bBox_PythonGetVar", "bBox_PythonSetVar", "bBox_PythonFinalize", "bBox_Ruby", "bBox_JQ", "bBox_XPathInitializeFromText", "bBox_XPathEvaluate", "bBox_XPathFinalize"],
+    "text_and_parsing": ["bBox_EvaluateList", "bBox_Grep", "bBox_SplitText", "bBox_ParsePositionList", "bBox_GetCharacterStyle", "bBox_Sort"],
+    "files_and_filesystem": ["bBox_FileRead", "bBox_FileWrite", "bBox_FileStatus", "bBox_FileSymLink", "bBox_MimeTypeForPath"],
+    "images": ["bBox_GraphicsMagick", "bBox_Sips"],
+    "clipboard_and_ui": ["bBox_PasteboardFlavors", "bBox_PasteboardGet", "bBox_PasteboardSet", "bBox_PerformKeystrokes", "bBox_MacNotificationsGetSettings"],
+    "webviewer": ["bBox_WebViewEstimatedProgress", "bBox_WebViewEvaluateJavaScript", "bBox_WebViewIsLoading", "bBox_WebViewLoadFile", "bBox_WebViewLoadHTML", "bBox_WebViewTitle"],
+    "calendar_and_os": ["bBox_MacCalendar", "bBox_SetEnvironmentVariable", "bBox_SysCtl", "bBox_URLHandlerInfo", "bBox_FM_API_URL"],
+    "diagnostics_and_meta": ["bBox_Version", "bBox_LastError", "bBox_ReferenceInfo", "bBox_SessionInfo", "bBox_ThreadInfo", "bBox_StackBacktrace", "bBox_CurrentTime"],
+    "logging_and_notifications": ["bBox Syslog", "bBox Schema Notifications"],
+    "scripting_helpers": ["bBox_DoScript"]
+  },
+
+  "functions": [
+    {
+      "name": "bBox_Shell",
+      "signature": "bBox_Shell ( mode ; script )",
+      "since": "0.3",
+      "compatibility": ["WPE", "WebDirect", "Ubuntu", "Server", "macOS", "Client"],
+      "description": "Executes the given text with the Unix shell and returns stdout only (max 2 GB, truncated after 160 MB). Does not support container data as the script parameter; for more control over input/output use bBox_Bash or bBox_Zsh instead.",
+      "parameters": {
+        "mode": "0 = convert both input and output line endings; 1 = skip converting FileMaker's carriage-return line endings to newlines on input; 2 = skip converting shell newline output back to carriage returns; 3 = skip translation of input and output line endings entirely",
+        "script": "String to be evaluated (executed) by the shell"
+      },
+      "result": "String returned from executing the shell command",
+      "error_source": "bBox_LastError(\"posix\")",
+      "script_step_equivalent": "bBox Shell"
+    },
+    {
+      "name": "bBox_Bash",
+      "signature": "bBox_Bash ( mode ; text {; param1 ; ... ; param5} )",
+      "description": "Runs text as a Bash script with more control over input/output/parameters than bBox_Shell, including container-data support.",
+      "script_step_equivalent": "bBox Bash"
+    },
+    {
+      "name": "bBox_Zsh",
+      "signature": "bBox_Zsh ( mode ; text {; ...} )",
+      "description": "Runs text as a Zsh script, analogous to bBox_Bash but using the Z shell.",
+      "script_step_equivalent": "bBox Zsh"
+    },
+    {
+      "name": "bBox_Applescript",
+      "signature": "bBox_Applescript ( mode ; script {; handler ; param1 ; param2} )",
+      "description": "Executes AppleScript, optionally calling a specific handler with parameters. macOS only; limited when run server-side (PSoS) because there is no accessible logged-in GUI session.",
+      "script_step_equivalent": "bBox Applescript"
+    },
+    {
+      "name": "bBox_Curl",
+      "signature": "bBox_Curl ( param1 {; param2 ; ... ; param5} )",
+      "since": "0.98 (script step)",
+      "description": "Performs HTTP requests (GET/POST/etc.) via cURL, commonly used for REST and SOAP web-service calls from FileMaker.",
+      "script_step_equivalent": "bBox Curl"
+    },
+    {
+      "name": "bBox_CurrentTime",
+      "signature": "bBox_CurrentTime ( {format} )",
+      "description": "Returns the current time, optionally in a specified format (higher precision than FileMaker's native Get(CurrentTime))."
+    },
+    {
+      "name": "bBox_DoScript",
+      "signature": "bBox_DoScript ( filename ; scriptname {; parameter} )",
+      "description": "Invokes a script in another (or the same) FileMaker file by name, optionally passing a parameter."
+    },
+    {
+      "name": "bBox_DuckDBOpen",
+      "signature": "bBox_DuckDBOpen ( path {; options} )",
+      "description": "Opens a DuckDB database file (or in-memory database) and returns a reference used by bBox_DuckDBExec / bBox_DuckDBClose."
+    },
+    {
+      "name": "bBox_DuckDBExec",
+      "signature": "bBox_DuckDBExec ( reference ; statement ; {parameters ...} )",
+      "description": "Executes a SQL statement against an open DuckDB reference, optionally with bound parameters."
+    },
+    {
+      "name": "bBox_DuckDBClose",
+      "signature": "bBox_DuckDBClose ( reference )",
+      "description": "Closes a DuckDB reference opened with bBox_DuckDBOpen."
+    },
+    {
+      "name": "bBox_Scp",
+      "signature": "bBox_Scp ( param1 ; param2 {; ...} )",
+      "description": "Transfers files to/from a remote host over SCP."
+    },
+    {
+      "name": "bBox_SQLiteOpen",
+      "signature": "bBox_SQLiteOpen ( path {; options} )",
+      "description": "Opens a SQLite database and returns a reference for bBox_SQLiteExec / bBox_SQLiteOptions / bBox_SQLiteClose. Used on older bBox versions in place of DuckDB."
+    },
+    {
+      "name": "bBox_SQLiteExec",
+      "signature": "bBox_SQLiteExec ( reference ; statement ; {parameters ...} )",
+      "description": "Executes a SQL statement against an open SQLite reference."
+    },
+    {
+      "name": "bBox_SQLiteOptions",
+      "signature": "bBox_SQLiteOptions ( reference ; columnSeparator ; rowSeparator )",
+      "description": "Sets the column/row separators used when formatting SQLite result sets as text."
+    },
+    {
+      "name": "bBox_SQLiteClose",
+      "signature": "bBox_SQLiteClose ( reference )",
+      "description": "Closes a SQLite reference opened with bBox_SQLiteOpen."
+    },
+    {
+      "name": "bBox_ExecuteSQL",
+      "signature": "bBox_ExecuteSQL ( filename ; sqlQuery {; columnSeparator ; rowSeparator ; arguments ...} )",
+      "description": "Runs a SQL query directly against a file path (e.g. a SQLite/DuckDB file) without a persistent open reference."
+    },
+    {
+      "name": "bBox_JavaScript",
+      "signature": "bBox_JavaScript ( expression {; delimiter ; ...} )",
+      "description": "Evaluates a JavaScript expression using JavaScriptCore, optionally exposing an `fm` bridge object back to FileMaker. Requires libjavascriptcoregtk on Ubuntu.",
+      "script_step_equivalent": "bBox JavaScript"
+    },
+    {
+      "name": "bBox_JavaScriptNode",
+      "signature": "bBox_JavaScriptNode ( mode ; text ; script {; param1 ; ...} )",
+      "description": "Runs JavaScript using a Node.js engine rather than JavaScriptCore, for access to the Node ecosystem/APIs."
+    },
+    {
+      "name": "bBox_Python3Run",
+      "signature": "bBox_Python3Run ( mode ; script {; text ; param1 ; ...} )",
+      "description": "Runs a Python 3 script in a fresh interpreter invocation (simpler, non-persistent alternative to the Compile/Execute/GetVar/SetVar/Finalize session-based Python functions). Has special Linux dependency requirements.",
+      "script_step_equivalent": "bBox Python3 Run"
+    },
+    {
+      "name": "bBox_PythonCompile",
+      "signature": "bBox_PythonCompile ( mode ; script )",
+      "description": "Compiles Python code into a persistent interpreter session, paired with bBox_PythonExecute / bBox_PythonEval / bBox_PythonGetVar / bBox_PythonSetVar / bBox_PythonFinalize."
+    },
+    {
+      "name": "bBox_PythonExecute",
+      "signature": "bBox_PythonExecute ( mode )",
+      "description": "Executes the previously compiled Python session code."
+    },
+    {
+      "name": "bBox_PythonEval",
+      "signature": "bBox_PythonEval ( reference ; expression )",
+      "description": "Evaluates a Python expression within an existing Python session/reference and returns its value."
+    },
+    {
+      "name": "bBox_PythonGetVar",
+      "signature": "bBox_PythonGetVar ( name )",
+      "description": "Retrieves the value of a variable from the active Python session."
+    },
+    {
+      "name": "bBox_PythonSetVar",
+      "signature": "bBox_PythonSetVar ( name ; value {; type} )",
+      "description": "Sets a variable's value in the active Python session, optionally specifying its Python type."
+    },
+    {
+      "name": "bBox_PythonFinalize",
+      "signature": "bBox_PythonFinalize",
+      "description": "Tears down/finalizes the active Python session started with bBox_PythonCompile."
+    },
+    {
+      "name": "bBox_Ruby",
+      "signature": "bBox_Ruby ( mode ; text ; param1 {; param2 ; ... ; param5} )",
+      "description": "Executes a Ruby script, analogous to bBox_Bash/bBox_Python3Run for the Ruby interpreter."
+    },
+    {
+      "name": "bBox_JQ",
+      "signature": "bBox_JQ ( mode ; text ; param1 {; ...} )",
+      "description": "Runs a jq filter/expression against JSON text — useful for JSON transformations beyond FileMaker's native JSON functions."
+    },
+    {
+      "name": "bBox_EvaluateList",
+      "signature": "bBox_EvaluateList ( values ; expression {; delimiter} )",
+      "description": "Evaluates a calculation expression once per item in a delimited list of values, useful for list-based transformations."
+    },
+    {
+      "name": "bBox_Grep",
+      "signature": "bBox_Grep ( mode ; text ; param1 {; param2 ; param3} )",
+      "description": "Searches/extracts text using regular expressions (grep-style pattern matching)."
+    },
+    {
+      "name": "bBox_SplitText",
+      "signature": "bBox_SplitText ( text ; position ; length ; skipRepeats ; separator1 ; separator2 ; delimiter )",
+      "description": "Splits text into components based on position/length and separator rules."
+    },
+    {
+      "name": "bBox_ParsePositionList",
+      "signature": "bBox_ParsePositionList ( ... )",
+      "description": "Parses a position list (as used for layout element XML) for ad-hoc searches of layout elements."
+    },
+    {
+      "name": "bBox_GetCharacterStyle",
+      "signature": "bBox_GetCharacterStyle ( text ; position )",
+      "description": "Returns character-level style information (e.g. font/format) at a given position in styled text."
+    },
+    {
+      "name": "bBox_Sort",
+      "signature": "bBox_Sort ( mode ; input ; param1 {; param2 ; param3} )",
+      "description": "Sorts a list of values according to the given mode and parameters."
+    },
+    {
+      "name": "bBox_FileRead",
+      "signature": "bBox_FileRead ( path ; type {; offset ; filename} )",
+      "description": "Reads a file from disk as text or container data, with optional byte offset and target filename for the container result."
+    },
+    {
+      "name": "bBox_FileWrite",
+      "signature": "bBox_FileWrite ( data ; path {; append} )",
+      "description": "Writes text or container data to a file on disk, optionally appending rather than overwriting."
+    },
+    {
+      "name": "bBox_FileStatus",
+      "signature": "bBox_FileStatus ( path {; parameter} )",
+      "description": "Returns status/metadata information about a file or directory path (existence, size, permissions, etc. depending on parameter)."
+    },
+    {
+      "name": "bBox_FileSymLink",
+      "signature": "bBox_FileSymLink ( sourcePath ; destinationPath {; useHardLink} )",
+      "description": "Creates a symbolic link (or optionally a hard link) between two file paths."
+    },
+    {
+      "name": "bBox_MimeTypeForPath",
+      "signature": "bBox_MimeTypeForPath ( path )",
+      "description": "Returns the MIME type inferred for a given file path."
+    },
+    {
+      "name": "bBox_GraphicsMagick",
+      "signature": "bBox_GraphicsMagick ( mode ; param1 ; param2 {; param3 ; ...} )",
+      "since": "0.98 (script step)",
+      "description": "Performs image conversion/manipulation using GraphicsMagick. Requires extra OS dependencies on Ubuntu.",
+      "script_step_equivalent": "bBox GraphicsMagick"
+    },
+    {
+      "name": "bBox_Sips",
+      "signature": "bBox_Sips ( mode ; param1 {; param2 ; ...} )",
+      "description": "Performs image conversion/manipulation using macOS's built-in sips tool (macOS only)."
+    },
+    {
+      "name": "bBox_PasteboardFlavors",
+      "signature": "bBox_PasteboardFlavors ( {item} )",
+      "description": "Lists the data flavors/types currently available on the system pasteboard (clipboard)."
+    },
+    {
+      "name": "bBox_PasteboardGet",
+      "signature": "bBox_PasteboardGet ( mode ; item ; flavor )",
+      "description": "Retrieves data of a given flavor/type from the system pasteboard."
+    },
+    {
+      "name": "bBox_PasteboardSet",
+      "signature": "bBox_PasteboardSet ( mode ; flavor )",
+      "description": "Writes data of a given flavor/type to the system pasteboard."
+    },
+    {
+      "name": "bBox_PerformKeystrokes",
+      "signature": "bBox_PerformKeystrokes ( text {; ...} )",
+      "description": "Simulates keyboard input to the active application (macOS UI automation)."
+    },
+    {
+      "name": "bBox_MacCalendar",
+      "signature": "bBox_MacCalendar ( operation {; parameter1 ; parameter2} )",
+      "description": "Reads or manipulates macOS Calendar (EventKit) data."
+    },
+    {
+      "name": "bBox_MacNotificationsGetSettings",
+      "signature": "bBox_MacNotificationsGetSettings ( ... )",
+      "description": "Returns the current macOS notification settings for the application."
+    },
+    {
+      "name": "bBox_SetEnvironmentVariable",
+      "signature": "bBox_SetEnvironmentVariable ( name ; value )",
+      "description": "Sets an OS environment variable visible to subsequently launched child processes (e.g. shell/Python/Ruby calls)."
+    },
+    {
+      "name": "bBox_SysCtl",
+      "signature": "bBox_SysCtl ( {mib} )",
+      "description": "Reads low-level system control (sysctl) values from the OS."
+    },
+    {
+      "name": "bBox Text Window Action",
+      "signature": "bBox Text Window Action [ destination ; reference ; operation ; parameter1 ; parameter2 )",
+      "description": "Set, get, or perform action on a previously created text window. Operations include setting the window title, getting or setting the selection range, getting contents as text or HTML, or setting the window title. macOS only."
+    },
+    {
+      "name": "bBox Text Window Open",
+      "signature": "bBox Text Window Open [ destination ; title ; input type ; frame ]",
+      "description": "Create a new text window. macOS only."
+    },
+    {
+      "name": "bBox_WebViewLoadHTML",
+      "signature": "bBox_WebViewLoadHTML ( window ; webviewer ; HTML {; baseurl} )",
+      "description": "Loads raw HTML content into a named WebViewer object on a layout."
+    },
+    {
+      "name": "bBox_WebViewLoadFile",
+      "signature": "bBox_WebViewLoadFile ( window ; webviewer ; path )",
+      "description": "Loads a local file into a named WebViewer object."
+    },
+    {
+      "name": "bBox_WebViewEvaluateJavaScript",
+      "signature": "bBox_WebViewEvaluateJavaScript ( window ; webviewer ; script {; handlerFileName ; handlerScriptName} )",
+      "description": "Runs JavaScript inside a WebViewer, optionally calling back into a FileMaker script/handler with the result."
+    },
+    {
+      "name": "bBox_WebViewIsLoading",
+      "signature": "bBox_WebViewIsLoading ( window ; webviewer )",
+      "description": "Returns whether a WebViewer is currently loading content."
+    },
+    {
+      "name": "bBox_WebViewEstimatedProgress",
+      "signature": "bBox_WebViewEstimatedProgress ( window ; webviewer )",
+      "description": "Returns the estimated load progress (0-1) of a WebViewer."
+    },
+    {
+      "name": "bBox_WebViewTitle",
+      "signature": "bBox_WebViewTitle ( window ; webviewer )",
+      "description": "Returns the page title currently loaded in a WebViewer."
+    },
+    {
+      "name": "bBox_XPathInitializeFromText",
+      "signature": "bBox_XPathInitializeFromText ( mode ; text {; options ; namespaceValues} )",
+      "description": "Loads XML text into an XPath context (with optional namespace bindings) for querying with bBox_XPathEvaluate."
+    },
+    {
+      "name": "bBox_XPathEvaluate",
+      "signature": "bBox_XPathEvaluate ( expression {; delimiter} )",
+      "description": "Evaluates an XPath expression against the XML loaded by bBox_XPathInitializeFromText."
+    },
+    {
+      "name": "bBox_XPathFinalize",
+      "signature": "bBox_XPathFinalize",
+      "description": "Releases the XPath context created by bBox_XPathInitializeFromText."
+    },
+    {
+      "name": "bBox_URLHandlerInfo",
+      "signature": "bBox_URLHandlerInfo ( scheme )",
+      "description": "Returns information about which application registers/handles a given URL scheme."
+    },
+    {
+      "name": "bBox_FM_API_URL",
+      "signature": "bBox_FM_API_URL ( ... )",
+      "description": "Returns a URL usable for calling FileMaker's own Data/Admin API from within the current session/context."
+    },
+    {
+      "name": "bBox_Version",
+      "signature": "bBox_Version ( {versionFormat} )",
+      "description": "Returns the installed bBox plug-in version, or '?' if bBox is not installed/registered — useful as an install-check before triggering an installation step."
+    },
+    {
+      "name": "bBox_LastError",
+      "signature": "bBox_LastError ( reference )",
+      "description": "Returns the last error for a given function family/reference (e.g. \"posix\" for shell-type calls, or a session/reference number for stateful engines)."
+    },
+    {
+      "name": "bBox_ReferenceInfo",
+      "signature": "bBox_ReferenceInfo ( reference )",
+      "description": "Returns diagnostic information about an open reference (DuckDB/SQLite/XPath/Python session, etc.)."
+    },
+    {
+      "name": "bBox_SessionInfo",
+      "signature": "bBox_SessionInfo",
+      "description": "Returns diagnostic information about the current bBox session."
+    },
+    {
+      "name": "bBox_ThreadInfo",
+      "signature": "bBox_ThreadInfo",
+      "description": "Returns diagnostic information about the current execution thread — useful when debugging thread-safety issues with stateful bBox functions."
+    },
+    {
+      "name": "bBox_StackBacktrace",
+      "signature": "bBox_StackBacktrace",
+      "description": "Returns a stack backtrace for debugging plug-in crashes or hangs."
+    },
+    {
+      "name": "bBox Syslog",
+      "signature": "bBox Syslog ( path {; options} )",
+      "description": "Script step writes log entries to the system syslog; related script steps include Syslog Open/Close for managing a persistent log handle."
+    },
+    {
+      "name": "bBox Schema Notifications",
+      "signature": "bBox Schema Notifications [ type ; pathOrURL ; Script Name ; Credentials ]",
+      "description": "Registers a script to receive notifications when the FileMaker schema changes, optionally routed to a path/URL such as syslog or DuckDB, per the plug-in API."
+    }
+  ],
+
+  "reference_pages": {
+    "home": "https://github.com/beezwax/bbox-documentation/wiki",
+    "function_and_script_step_list": "https://github.com/beezwax/bbox-documentation/wiki/Functions-&-Script-Steps",
+    "installation": "https://github.com/beezwax/bbox-documentation/wiki/Installation",
+    "errors_and_troubleshooting": "https://github.com/beezwax/bbox-documentation/wiki/Errors-&-Troubleshooting",
+    "mode_parameters": "https://github.com/beezwax/bbox-documentation/wiki/Mode-Parameters",
+    "parameters": "https://github.com/beezwax/bbox-documentation/wiki/Parameters",
+    "sessions_and_thread_safety": "https://github.com/beezwax/bbox-documentation/wiki/Sessions-&-Thread-Safety",
+    "native_python_js_duckdb_functions": "https://github.com/beezwax/bbox-documentation/wiki/Native-Python,-JavaScript,-and-DuckDB-Functions",
+    "javascript_native_functions": "https://github.com/beezwax/bbox-documentation/wiki/JavaScript-Native-Functions",
+    "python_native_functions": "https://github.com/beezwax/bbox-documentation/wiki/Python-Native-Functions",
+    "older_versions": {
+      "0.97+": "https://www.beezwax.net/bbox-functions",
+      "0.88": "https://www.beezwax.net/bbox-0-88-functions",
+    }
+  },
+
+  "usage_notes_for_assistant": [
+    "Function names use FileMaker calculation syntax with semicolons separating parameters, e.g. bBox_Shell ( mode ; script ). Do not convert semicolons to commas when writing FileMaker calculations.",
+    "Not every function listed on the wiki has a corresponding public wiki page yet — some link out to beezwax.net product pages instead; treat those as authoritative for parameter details not captured here.",
+    "This file summarizes documentation retrieved on 2026-07-06 from a live wiki (48 pages); the wiki is actively edited, so re-check https://github.com/beezwax/bbox-documentation/wiki for the latest signatures, mode tables, and version notes before giving precise parameter-by-parameter guidance on a less-common function.",
+    "When a user's environment is Ubuntu Server, always check the 'platform_support.notes' Linux dependency list before suggesting bBox_Python3Run, bBox_Ruby, bBox_JQ, bBox_JavaScript, bBox_Zsh, or bBox_GraphicsMagick, since these fail to load without extra system libraries.",
+    "When a user reports a bBox function silently failing inside a calculation field, check first whether it's a STORED calculation — Shell/Bash/Python/Ruby-family functions require unstored calculations."
+  ]
+}
